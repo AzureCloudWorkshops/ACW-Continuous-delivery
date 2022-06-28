@@ -68,7 +68,8 @@ on:
     branches: [ main ]
 ```
 
-This will always run assuming we are pushing to main or doing a pull request into main. Next section we want to checkout the repo to be able to access the code. 
+This will always run assuming we are pushing to main or doing a pull request into main. Next section we want to checkout the repo to be able to access the code.
+
 ```YML
 jobs:
   build:
@@ -78,7 +79,3 @@ jobs:
 ```
 
 ## Deploy to 2 envs
-
-az role assignment create --role contributor --subscription c4a0b4d0-d563-4075-8a35-0000c122baf8 --assignee-object-id 392515a4-d5a5-4d0d-b5c2-d0d51f3ab5a2 --assignee-principal-type ServicePrincipal --scope /subscriptions/cae71fba-6117-44f8-9bd9-9b2a834c28c8/resourceGroups/resource-group-nonprod
-
-az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/17afcf92-1417-4921-a93c-2f1c3baee7d4/federatedIdentityCredentials' --body '{"name":"pre-prod","issuer":"https://token.actions.githubusercontent.com","subject":"repo:organization/repository:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}'
