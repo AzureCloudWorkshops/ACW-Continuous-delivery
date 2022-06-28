@@ -1,2 +1,4 @@
-solution/bin
-solution/obj
+solution/api/bin
+solution/api/obj
+solution/tests/bin
+solution/tests/obj

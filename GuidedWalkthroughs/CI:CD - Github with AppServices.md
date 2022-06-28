@@ -37,12 +37,48 @@ In order to connect GitHub to Azure we are going to use Azure login action with 
 3. To give it roles we want to do `az role assignment create --role contributor --subscription <subscriptionId> --assignee-object-id <assigneeObjectId> --assignee-principal-type ServicePrincipal --scope /subscriptions/$subscriptionId/resourceGroups/<resourceGroupName>` You want to copy the object id from the previous command into assigneeObjectId, get your subscription id by `az account list`
 4. Save clientId, subscriptionId, and tenantId to use later in GitHub actions.
 5. Repeat for prob
-   az role assignment create --role contributor --subscription c4a0b4d0-d563-4075-8a35-0000c122baf8 --assignee-object-id 392515a4-d5a5-4d0d-b5c2-d0d51f3ab5a2 --assignee-principal-type ServicePrincipal --scope /subscriptions/cae71fba-6117-44f8-9bd9-9b2a834c28c8/resourceGroups/resource-group-nonprod
 
 ## Setup Default MVC
 
+Now that azure is ready we need to create our sample project. That will be done using `dotnet new webapi` that will create a dotnet app that by default should have a weather controller to hit.
+
 ## Setup testing
+
+We also want to confirm we have a testing project in place because one benefit of CI/CD is running tests on every check in! To create a sub project that is a test project we will run `dotnet new nunit` in a new folder. That by default will create a project with a test that is always passing!
+
+# GitHub Setup
+
+## Finalize GitHub and Azure Connection
+
+In order to finalize our GitHub to Azure connection there are a couple of final things we need to do in GitHub. We want to first go to our repos section and create our two environments. You can go there by going to Settings => under code and automation Environments => New Environment we will create pre-prod and prod. When you create your first one you can see a few options to add as protection for your environments. As a rough general rule of thumb I like to allow all merged code to always go to pre-prod. I also like in green field projects or projects without end users to automatically go to prod too. However, if you have end users or need explicit separation of duties for say like SOCs or SOXs you can add approvers or timers depending on your process. You can also add both so if a required reviewer is being a bottle neck they can be bypassed after a certain amount of time. I like to craft my software development life cycles to specify in SOCs that the developers (after a peer review of code) can manually verify their code works as expected in pre-prod and can trigger the prod release when ready. That helps give everyone a second chance incase something breaks in a deployed environment, unexpected behavior, or just missing AC prior to going to prod. You can also use Feature Flags to get around a lot of these things too.
+
+Now we need to create the credentials we will store in GitHub. `az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:organization/repository:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}'` in case you forgot what your object id was you can get that by going to portal.azure.com going to Azure Active Directory => App registrations and should see your Application (client) ID. You should get a JSON object {}
+
+Now we need to configure our Azure creds in GitHub. We want to go to GitHub => our repo => Settings => Secrets => Actions => New Repo Secret. We are going to add our Tenant ID and Subscription ID. We are using this flow because they are the same in both envs we will do something slightly different for Client ID. Now we need to click "Manage your environments and add environment secrets" this is because we will have a pre-prod and prod client id. Click into the correct env and select add secret. Now we are going to start setting up our pipelines!
 
 ## Setup test run on PR and main
 
+Now we need to create a pipeline to run on PR (pull requests) and when we merge code to main. This will run only tests on PRs and run tests and deploy code to Azure on merges of main. To start with you want to create a file named .github/workflows/pipeline.yml this is where GitHub looks for pipelines by default. The first thing we want to do is create a pipeline to run tests and build our dotnet project. This will happen on every push to main and pull_request into main. We are using YML here too so tabs are important. For exact references look at .github/workflows/pipeline.yml for exacts. We want to start with
+
+```YML
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+```
+
+This will always run assuming we are pushing to main or doing a pull request into main. Next section we want to checkout the repo to be able to access the code. 
+```YML
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+```
+
 ## Deploy to 2 envs
+
+az role assignment create --role contributor --subscription c4a0b4d0-d563-4075-8a35-0000c122baf8 --assignee-object-id 392515a4-d5a5-4d0d-b5c2-d0d51f3ab5a2 --assignee-principal-type ServicePrincipal --scope /subscriptions/cae71fba-6117-44f8-9bd9-9b2a834c28c8/resourceGroups/resource-group-nonprod
+
+az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/17afcf92-1417-4921-a93c-2f1c3baee7d4/federatedIdentityCredentials' --body '{"name":"pre-prod","issuer":"https://token.actions.githubusercontent.com","subject":"repo:organization/repository:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}'
