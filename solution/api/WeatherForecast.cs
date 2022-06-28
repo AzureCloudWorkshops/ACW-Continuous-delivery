@@ -1,4 +1,4 @@
-namespace solution;
+namespace api;
 
 public class WeatherForecast
 {

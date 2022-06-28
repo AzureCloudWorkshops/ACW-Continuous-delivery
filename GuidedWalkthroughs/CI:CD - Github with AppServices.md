@@ -38,13 +38,17 @@ In order to connect GitHub to Azure we are going to use Azure login action with 
 4. Save clientId, subscriptionId, and tenantId to use later in GitHub actions.
 5. Repeat for prob
 
+## Setup Dotnet Solution
+
+Dotnet projects can have 1 solution but many sub-projects. For example a main api, a test suite, an integration test suite, maybe a third party interaction you at some point will spin off for a nuget package etc. A solution is a way to combine all of these sub-projects into one main folder and build them all at a time. To do this we are going to run `dotnet new sln --name <MySolution>` this will house our testing project and MVC project.
+
 ## Setup Default MVC
 
-Now that azure is ready we need to create our sample project. That will be done using `dotnet new webapi` that will create a dotnet app that by default should have a weather controller to hit.
+Now that azure is ready we need to create our sample project. That will be done using `dotnet new webapi` that will create a dotnet app that by default should have a weather controller to hit. Now we need to tie it to our solution with `dotnet sln add <path to your new csproj>`
 
 ## Setup testing
 
-We also want to confirm we have a testing project in place because one benefit of CI/CD is running tests on every check in! To create a sub project that is a test project we will run `dotnet new nunit` in a new folder. That by default will create a project with a test that is always passing!
+We also want to confirm we have a testing project in place because one benefit of CI/CD is running tests on every check in! To create a sub project that is a test project we will run `dotnet new nunit` in a new folder. That by default will create a project with a test that is always passing! We also want to add this to our solution so repeat the dotnet sln add with your new test project too!
 
 # GitHub Setup
 
@@ -76,6 +80,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+```
+
+Finally we are going to build and test our dotnet apps
+
+```YML
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v2
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
 ```
 
 ## Deploy to 2 envs
