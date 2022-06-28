@@ -6,7 +6,7 @@ When we finish this workshop you will have a working CI/CD pipeline, that is run
 
 ## Prerequisites
 
-There are a few tools we want to make sure we have prior to starting this workshop we want to make sure we have [.Net Core CLI](https://dotnet.microsoft.com/en-us/download/dotnet) make sure you pick the latest LTS version, a code editor like [VS Code](https://code.visualstudio.com), [git cli](https://git-scm.com/downloads), and an [Azure Account](https://portal.azure.com).
+There are a few tools we want to make sure we have prior to starting this workshop we want to make sure we have [.Net Core CLI](https://dotnet.microsoft.com/en-us/download/dotnet) make sure you pick the latest LTS version, a code editor like [VS Code](https://code.visualstudio.com), [git cli](https://git-scm.com/downloads), [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), and an [Azure Account](https://portal.azure.com).
 
 ## Init Repo
 
@@ -26,9 +26,18 @@ Now that we have our Azure account setup we are going to do the rest of this lab
 
 The first thing we are going to do is search for the resource group. You may ask since we are going to use infrastructure as code why are we manually creating these? There's two main reason Azure doesn't allow you to create resource groups via Bicep or ARM, and when we create a token to publish from Github we are going to scope it to just a particular resource group and not the whole Azure subscription. This is best practice in case it is every compromised they only get access to one resource group not everything. Go ahead and name your resource groups something like resource-group-nonprod and resource-group-prod. Region shouldn't matter, but in practice it's best to pick the one nearest to your main user pool. I'll go with US East since that's the default. Lastly, I'm going to tag it ACW-Tutorial just so I know the costs of running this versus whatever else might be in my subscription. \*Note Azure bills at a subscription level and you can use tags to help filter down costs. By default they will help filter you down by resource type too, but that's not really scalable past a few resource groups.
 
-Now that we have 2 resource groups we need to create the Azure
+Now that we have 2 resource groups we need to create the connection between Azure and Github.
 
 ## Setup Azure Connection
+
+In order to connect GitHub to Azure we are going to use Azure login action with OpenID. We will do this twice once for each resource group to have a separation in connections. In this section we will be using the Azure CLI (Command Line Interface) to setup everything we need to get going. We are going to start with `az login` that command will open a window and authenticate your terminal of choice (probably the one in VS Code) to Azure!
+
+1. Now to get everything working with open ID we need to create an Azure Active Directory application (this sounds scary but it's a way to identify your app from a security perspective). That will be `az ad app create --display-name <your app name>` \*Note from now on when there's <> that indicates put your value here and remove <>. For example if my app will be foobar I would do `az ad app create --display-name foobar`.
+2. Next we want to create a service principal for that app id. A service principal is typically a non-user object that can interact with things/get permissions like people. We will run `az ad sp create --id <appId>` if you missed your id you can run `az ad app list --display-name <your app name>` to list your app to find your correct app ID. This command is creating a service principal for the app. Next we need to give it roles so it can do something.
+3. To give it roles we want to do `az role assignment create --role contributor --subscription <subscriptionId> --assignee-object-id <assigneeObjectId> --assignee-principal-type ServicePrincipal --scope /subscriptions/$subscriptionId/resourceGroups/<resourceGroupName>` You want to copy the object id from the previous command into assigneeObjectId, get your subscription id by `az account list`
+4. Save clientId, subscriptionId, and tenantId to use later in GitHub actions.
+5. Repeat for prob
+   az role assignment create --role contributor --subscription c4a0b4d0-d563-4075-8a35-0000c122baf8 --assignee-object-id 392515a4-d5a5-4d0d-b5c2-d0d51f3ab5a2 --assignee-principal-type ServicePrincipal --scope /subscriptions/cae71fba-6117-44f8-9bd9-9b2a834c28c8/resourceGroups/resource-group-nonprod
 
 ## Setup Default MVC
 
