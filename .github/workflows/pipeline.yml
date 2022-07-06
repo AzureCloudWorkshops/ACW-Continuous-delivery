@@ -31,13 +31,28 @@ jobs:
         run: dotnet test --no-restore --verbosity normal
         working-directory: solution
 
+      - name: Publish
+        run: dotnet publish -c Release -o website
+        working-directory: solution
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: website
+          path: solution/website/**
+          if-no-files-found: error
+
   merge_job_pre_prod:
     needs: [build]
     # if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
     runs-on: ubuntu-latest
     environment: pre-prod
     steps:
-      - uses: actions/checkout@v2
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: website
+          path: website
 
       - name: "Az CLI login"
         uses: azure/login@v1
@@ -54,10 +69,6 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: resource-group-nonprod
           template: ./solution/infrastructure/infrastructure.bicep
-
-      - name: Publish
-        run: dotnet publish -c Release -o website
-        working-directory: solution
 
       - name: Deploy web app
         id: deploywebapp
