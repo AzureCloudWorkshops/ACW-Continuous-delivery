@@ -81,7 +81,7 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: resource-group-nonprod
           template: iac/infrastructure.bicep
-          parameters: env='nonprod'
+          parameters: env=nonprod
 
       - name: Deploy web app
         id: deploywebapp
