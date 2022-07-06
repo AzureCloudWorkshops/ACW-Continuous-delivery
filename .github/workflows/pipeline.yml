@@ -15,20 +15,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2
+
       - name: Install dependencies
         run: dotnet restore
         working-directory: solution
+
       - name: Build
         run: dotnet build --configuration Release --no-restore
         working-directory: solution
+
       - name: Test
         run: dotnet test --no-restore --verbosity normal
         working-directory: solution
-      - name: publish
-        run: dotnet publish --no-restore
+
+      - name: Publish
+        run: dotnet publish -c Release -o website
         working-directory: solution
+        
+       - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: website
+          path: SimpleFeedReader/website/**
+          if-no-files-found: error
 
   merge_job_pre_prod:
     needs: [build]
@@ -36,7 +48,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: pre-prod
     steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: website
+          path: website
+
       - uses: actions/checkout@v2
+      
       - name: "Az CLI login"
         uses: azure/login@v1
         with:
@@ -58,6 +77,13 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: resource-group-nonprod
           template: ./solution/infrastructure/infrastructure.bicep
+
+      - name: Deploy web app
+        id: deploywebapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: appService-nonprod
+          package: website
 
   merge_job_prod:
     # this job will only run if the PR has been merged
