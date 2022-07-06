@@ -67,6 +67,10 @@ jobs:
           name: iac
           path: iac
 
+      - name: Run build script
+        run: ls -al iac
+        shell: bash
+
       - name: "Az CLI login"
         uses: azure/login@v1
         with:
@@ -81,7 +85,7 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: resource-group-nonprod
-          template: iac/.
+          template: iac/*.bicep
 
       - name: Deploy web app
         id: deploywebapp
