@@ -35,7 +35,7 @@ jobs:
       - run: |
           echo PR #${{ github.event.number }} has been merged
 
-  merge_job_pre_prod:
+  merge_job_prod:
     # this job will only run if the PR has been merged
     needs: [merge_job_pre_prod]
     if: needs.merge_job_pre_prod.result == 'success'
