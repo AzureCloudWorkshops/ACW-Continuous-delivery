@@ -42,6 +42,13 @@ jobs:
           path: solution/website/**
           if-no-files-found: error
 
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: iac
+          path: solution/infrastructure/infrastructure.bicep
+          if-no-files-found: error
+
   merge_job_pre_prod:
     needs: [build]
     # if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
@@ -53,6 +60,12 @@ jobs:
         with:
           name: website
           path: website
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: iac
+          path: iac
 
       - name: "Az CLI login"
         uses: azure/login@v1
@@ -68,7 +81,7 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: resource-group-nonprod
-          template: ./solution/infrastructure/infrastructure.bicep
+          template: *.bicep
 
       - name: Deploy web app
         id: deploywebapp
