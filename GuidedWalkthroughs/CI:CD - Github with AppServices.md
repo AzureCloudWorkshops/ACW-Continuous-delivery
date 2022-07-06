@@ -206,21 +206,6 @@ Finally we are going to build and test our dotnet apps
         run: dotnet test --no-restore --verbosity normal
 ```
 
-Lastly we are going to build our release and publish the feed for later jobs!
-
-```YML
-- name: Publish
-  run: dotnet publish -c Release -o website
-  working-directory: solution
-
-- name: Upload a Build Artifact
-  uses: actions/upload-artifact@v2.2.2
-  with:
-    name: website
-    path: solution/website/**
-    if-no-files-found: error
-```
-
 ## Task 7 Infrastructure As Code
 
 Now we want to create our infrastructure as code file. In Azure there are two built in ways to do this ARM Templates (Azure Resource Manager Templates) or newer BICEP. Bicep is much nicer and does compile down to ARM, but it was built with humans in mind so it's much easier to understand for the average person instead of ARM which is JSON and is very verbose. Visual Studio Code does have a Bicep extension that makes life much easier too with linter support!
