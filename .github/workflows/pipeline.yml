@@ -31,7 +31,6 @@ jobs:
         working-directory: solution
 
   merge_job_pre_prod:
-    # this job will only run if the PR has been merged
     needs: [build]
     # if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
     runs-on: ubuntu-latest
