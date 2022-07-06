@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v2.2.2
         with:
           name: website
-          path: SimpleFeedReader/website/**
+          path: solution/website/**
           if-no-files-found: error
 
   merge_job_pre_prod:
