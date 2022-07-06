@@ -82,7 +82,7 @@ jobs:
         id: deploywebapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: appService-nonprod
+          app-name: solution
           package: website
 
   merge_job_prod:
