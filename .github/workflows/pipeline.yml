@@ -77,7 +77,7 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: appService-nonprod
-          package: website
+          package: **/website
 
   merge_job_prod:
     # this job will only run if the PR has been merged
