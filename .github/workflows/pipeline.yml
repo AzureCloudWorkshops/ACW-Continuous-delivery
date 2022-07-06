@@ -32,7 +32,6 @@ jobs:
 
   merge_job_pre_prod:
     needs: [build]
-    #
     # if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
     runs-on: ubuntu-latest
     environment: pre-prod
