@@ -177,9 +177,13 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
 ```
 
-This will always run assuming we are pushing to main or doing a pull request into main. Next section we want to checkout the repo to be able to access the code.
+This will always run assuming we are pushing to main or doing a pull request into main. These permissions will also be used later on. Next section we want to checkout the repo to be able to access the code.
 
 ```YML
 jobs:

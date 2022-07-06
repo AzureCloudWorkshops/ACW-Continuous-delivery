@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,14 +31,33 @@ jobs:
         working-directory: solution
 
   merge_job_pre_prod:
-    # this job will only run if the PR has been merged
     needs: [build]
-    if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
+    # if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
     runs-on: ubuntu-latest
     environment: pre-prod
     steps:
-      - run: |
-          echo PR #${{ github.event.number }} has been merged
+      - uses: actions/checkout@v2
+      - name: "Az CLI login"
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          parameters: env='nonprod'
+
+      - name: "Run Azure CLI commands"
+        run: |
+          az account show
+          az group list
+          pwd
+
+      - name: Run Bicep deploy
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: resource-group-nonprod
+          template: ./solution/infrastructure/infrastructure.bicep
 
   merge_job_prod:
     # this job will only run if the PR has been merged
