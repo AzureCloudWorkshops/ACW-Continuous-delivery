@@ -11,7 +11,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
 }
 
 resource appService 'Microsoft.Web/sites@2021-03-01' = {
-  name: 'resourceGroup().name + "appService-" + env'
+  name: 'appService-${env}'
   location: location
   properties: {
     serverFarmId: appServicePlan.id

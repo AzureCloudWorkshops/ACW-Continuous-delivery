@@ -15,41 +15,64 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v2
+
       - name: Install dependencies
         run: dotnet restore
         working-directory: solution
+
       - name: Build
         run: dotnet build --configuration Release --no-restore
         working-directory: solution
+
       - name: Test
         run: dotnet test --no-restore --verbosity normal
         working-directory: solution
-      - name: publish
-        run: dotnet publish --no-restore
+
+      - name: Publish
+        run: dotnet publish -c Release -o website
         working-directory: solution
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: website
+          path: solution/website/**
+          if-no-files-found: error
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: iac
+          path: solution/infrastructure/infrastructure.bicep
+          if-no-files-found: error
 
   merge_job_pre_prod:
     needs: [build]
-    # if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
+    if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
     runs-on: ubuntu-latest
     environment: pre-prod
     steps:
-      - uses: actions/checkout@v2
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: website
+          path: website
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: iac
+          path: iac
+
       - name: "Az CLI login"
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          parameters: env='nonprod'
-
-      - name: "Run Azure CLI commands"
-        run: |
-          az account show
-          az group list
-          pwd
 
       - name: Run Bicep deploy
         id: deploy
@@ -57,14 +80,53 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: resource-group-nonprod
-          template: ./solution/infrastructure/infrastructure.bicep
+          template: iac/infrastructure.bicep
+          parameters: env='nonprod'
+
+      - name: Deploy web app
+        id: deploywebapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: appService-nonprod
+          package: website
 
   merge_job_prod:
-    # this job will only run if the PR has been merged
     needs: [merge_job_pre_prod]
-    if: needs.merge_job_pre_prod.result == 'success'
+    if: (github.ref == 'refs/heads/main') && needs.merge_job_pre_prod.result == 'success'
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - run: |
-          echo PR #${{ github.event.number }} has been merged
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: website
+          path: website
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: iac
+          path: iac
+
+      - name: "Az CLI login"
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          parameters: env='prod'
+
+      - name: Run Bicep deploy
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: resource-group-prod
+          template: iac/infrastructure.bicep
+
+      - name: Deploy web app
+        id: deploywebapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: appService-prod
+          package: website

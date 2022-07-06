@@ -206,6 +206,28 @@ Finally we are going to build and test our dotnet apps
         run: dotnet test --no-restore --verbosity normal
 ```
 
+Lastly we are going to build our release and publish the feed for later jobs and our infrastructure.bicep file.
+
+```YML
+- name: Publish
+  run: dotnet publish -c Release -o website
+  working-directory: solution
+
+- name: Upload a Build Artifact
+  uses: actions/upload-artifact@v2.2.2
+  with:
+    name: website
+    path: solution/website/**
+    if-no-files-found: error
+
+- name: Upload a Build Artifact
+  uses: actions/upload-artifact@v2.2.2
+  with:
+    name: iac
+    path: solution/infrastructure/infrastructure.bicep
+    if-no-files-found: error
+```
+
 ## Task 7 Infrastructure As Code
 
 Now we want to create our infrastructure as code file. In Azure there are two built in ways to do this ARM Templates (Azure Resource Manager Templates) or newer BICEP. Bicep is much nicer and does compile down to ARM, but it was built with humans in mind so it's much easier to understand for the average person instead of ARM which is JSON and is very verbose. Visual Studio Code does have a Bicep extension that makes life much easier too with linter support!
@@ -251,3 +273,133 @@ resource appService 'Microsoft.Web/sites@2021-03-01' = {
 This one is fairly similar. First line is the resource readable name and type of resource. After that is the name and location. Finally we have the serverFarmId (aka the server running our app). Now we should be good to deploy our infrastructure and the code to it!
 
 ## Task 8 Deployment
+
+Now is where the fun begins! We are going to start by adding a pre prod step!
+
+```YML
+merge_job_prod:
+  needs: [build]
+  if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
+  runs-on: ubuntu-latest
+  environment: pre-prod
+  steps:
+```
+
+This job is named merge_job_prod and it needs the build job. This allows us to use if statements on it. For example we are saying if this is the main branch and if the build step is successful do this step. We also are specifying our pre prod environment.
+
+```YML
+- name: Download a Build Artifact
+  uses: actions/download-artifact@v2.0.8
+  with:
+    name: website
+    path: website
+
+- name: Download a Build Artifact
+  uses: actions/download-artifact@v2.0.8
+  with:
+    name: iac
+    path: iac
+```
+
+The next steps will be downloading the artifacts we previously published!
+
+```YML
+- name: "Az CLI login"
+  uses: azure/login@v1
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+```
+
+Now we are going to test out our login with the login step. If you run into errors be sure to checkout your app registration
+![App Registration](media/AppRegSetup.png "App Registration")
+and then under certificates and secrets you should see a federated section that looks similar to this
+![App Fed](media/FederationSetup.png "App Fed")
+confirm you have everything matching the error log Github gives you if you do run into issues.
+
+Now we are going to deploy our infrastructure!
+
+```YML
+- name: Run Bicep deploy
+  id: deploy
+  uses: azure/arm-deploy@v1
+  with:
+    subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+    resourceGroupName: resource-group-nonprod
+    template: iac/infrastructure.bicep
+    parameters: env='nonprod'
+```
+
+This is using our same subscriptionId and we are feeding it our resource group, template that we downloaded above, and overwriting our env param. Assuming all of that works as it should your nonprod resource group should have resources created like this.
+![Resource Group](media/ResourceGroupDeployed.png "Resource Group")
+and you should see your app service.
+![App Service](media/AppService.png "App Service")
+if you click the link before you run the full pipeline you won't see anything there, but you will see the free https domain Microsoft gives you!
+
+Finally we are going to deploy the code to the app service!
+
+```YML
+- name: Deploy web app
+  id: deploywebapp
+  uses: azure/webapps-deploy@v2
+  with:
+    app-name: appService-nonprod
+    package: website
+```
+
+Assuming everything works you should get a response similar to this on your own domain!
+![Final Response](media/Final.png "Final Response")
+
+This is using the app name of our resource group and the artifact we packaged and downloaded above! So assuming you have the whole job done it should look something like this!
+
+```YML
+merge_job_pre_prod:
+    needs: [build]
+    if: (github.ref == 'refs/heads/main') && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    environment: pre-prod
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: website
+          path: website
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.8
+        with:
+          name: iac
+          path: iac
+
+      - name: "Az CLI login"
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run Bicep deploy
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: resource-group-nonprod
+          template: iac/infrastructure.bicep
+          parameters: env='nonprod'
+
+      - name: Deploy web app
+        id: deploywebapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: appService-nonprod
+          package: website
+```
+
+With that you are now able to have full CI/CD to a dev environment!
+
+## Task 9 Finish this by writing your own deployment to your production environment (feel free to check your solution against the one under solution/infrastructure)
+
+## Task 10 Delete All Of Your Resource Groups
+
+## Task 11 ⭐⭐You have now completed the first start and are officially no longer a novice and now can be considered dangerous in DevOps!⭐⭐
