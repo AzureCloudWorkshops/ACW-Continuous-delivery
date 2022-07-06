@@ -204,4 +204,46 @@ Finally we are going to build and test our dotnet apps
 
 ## Task 7 Infrastructure As Code
 
+Now we want to create our infrastructure as code file. In Azure there are two built in ways to do this ARM Templates (Azure Resource Manager Templates) or newer BICEP. Bicep is much nicer and does compile down to ARM, but it was built with humans in mind so it's much easier to understand for the average person instead of ARM which is JSON and is very verbose. Visual Studio Code does have a Bicep extension that makes life much easier too with linter support!
+
+To begin with since we have different envs and different resource groups we are going to need to pass that in what we want to name everything. I typically like to do something like projectNameResourceType-env for example if we wanted sql server I would usually name it something like foobarSqlServer-nonprod so when I search for foobarSqlServer I get all of my sql servers tied to my current project.
+
+To begin our .bicep file we want to create a infrastructure.bicep file. The first 2 lines we want to add are as follows
+
+```bicep
+param env string = 'nonprod'
+param location string = resourceGroup().location
+```
+
+The first line will hold our parameter for env that can be overridden. However, it has a default value of what it's assigned to. The next line will hold our location. As stated above it's best practice to put your location closest to your users. So typically if you do that with your resource group you can just reference it's location when setting all of the rest (note sometimes new resources or certain resources only have limited region rollout if you're using those you will have to specify a different region).
+
+Now we want to get into creating our cloud server. If you already are running an api on prem you might want to look into running it on an Azure VM, however since this is a greenfield project (new development) we're going to leverage the cloud and save some money using an app service. In order to have an app service you need an app service plan. An app service plan I like to think of as the main computer you are using. It's where you specify the compute power and that directly reflects in your price. For this example we are going to use F1 which is free for 60 minutes of compute. For us occasionally hitting our site that'll be fine. If not we can always up it and pay for more compute. You can see the breakdown of different tiers here.
+![App Service Plans](media/AppServicePlans.png "App Service Plans")
+Next is the line we need for our bicep.
+
+```bicep
+resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
+  name: 'resourceGroup().name + "appServicePlan-" + env'
+  location: location
+  sku: {
+    name: 'F1'
+  }
+  kind: 'linux'
+}
+```
+
+For this one we specify it is a resource not a var or param (variable or parameter), give it a user readable name, and the type of resource. The next line is the name. We are using some shorthand to get the resource group name and concat that with appServicePlan- and the env. Following that is the location we are just setting it to our resource groups location. The next section is sku. That's where we tell Azure how much compute we are wanting. For example there's 4 common types F1 B1 for Dev/Testing. P1 and S1 for standard and production work loads (pictured above). You can also have isolated app service plans which is where only your apps are hosted on that box. It's really pricy and if you need it it's there, but for the most part most apps will be in the S1 or P1 tiers. Finally is kind if you care of the OS of your server you can specify one. For the most part it doesn't really matter. Now we are going to specify our app service. It's one of the apps running on that server is how I like to think about it.
+
+```bicep
+resource appService 'Microsoft.Web/sites@2021-03-01' = {
+  name: 'resourceGroup().name + "appService-" + env'
+  location: location
+  properties: {
+    serverFarmId: appServicePlan.id
+  }
+}
+```
+
+This one is fairly similar. First line is the resource readable name and type of resource. After that is the name and location. Finally we have the serverFarmId (aka the server running our app). Now we should be good to deploy our infrastructure and the code to it!
+
 ## Task 8 Deployment

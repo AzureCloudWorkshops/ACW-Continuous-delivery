@@ -22,3 +22,25 @@ jobs:
       - name: Test
         run: dotnet test --no-restore --verbosity normal
         working-directory: solution
+      - name: publish
+        run: dotnet publish --no-restore
+        working-directory: solution
+
+  merge_job_pre_prod:
+    # this job will only run if the PR has been merged
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment: pre-prod
+    steps:
+      - run: |
+          echo PR #${{ github.event.number }} has been merged
+
+  merge_job_pre_prod:
+    # this job will only run if the PR has been merged
+    needs: [merge_job_pre_prod]
+    if: needs.merge_job_pre_prod.result == 'success'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - run: |
+          echo PR #${{ github.event.number }} has been merged
