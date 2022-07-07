@@ -40,7 +40,7 @@ The following technologies will be leveraged in this workshop:
 
 The following image shows the intended architecture for the solution:
 
-![CI/CD Arch](./GuidedWalkthroughs/media/CI_CD.png)
+![CI/CD Arch](./GuidedWalkthroughs/media/CI_CD.drawio.png)
 
 ## Code
 
