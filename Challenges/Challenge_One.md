@@ -1,0 +1,14 @@
+# What are challenges?
+
+The intent of these challenges are to keep growing DevOps skills by using some real work scenarios. My intention is to present problems similar to they will be presented in the real world. This means they can be DevOps with some app dev flavor. This first challenge will help showcase what I mean. As there are many ways to the same thing and as new libraries come out I am aware there probably isn't just one 'right' way, but I will discuss why I chose the solution I did. The plan is to have these challenges in this repos, have a solution for each challenge, and a walk through going step by step as more of a learning module. If you would like to submit your solution as an alternative feel free to open up a pull request and I'll happily review it. If it satisfies the needs I will merge it in as an alternate path to the same solution. The plan is also to take each solution from the previous challenge and build upon that to get deeper and deeper into Azure technologies.
+
+## Challenge One Scenario
+
+You did such a great job setting up CI/CD pipelines for your client they have started transitioning off of on prem legacy servers and moving other offerings to the cloud. Since you are now the resident expert many people are starting to come to you to build on the example project you put out for everyone to use. The company wants to keep being able to innovate and attract top talent. Many engineers are starting to come to you to help them build their skills. This is a great opportunity to show them how to do it and raise the bar of talent around the client. As the client moves to App Services they are noticing their bills start to stack up, and they are also starting to notice that they are not getting the results they are hoping for. They are paying for way more compute than they are using and some of the old apps are crashing and they have to repeatedly restart them. This is a problem for the client and they are looking for a way to fix it. You being fairly new to the cloud ask if anyone had any ideas. That's when a group of engineers talk about how they've heard with Kubernetes you can have pods spin up as they go bad and have many instances of your app running at once. Another group brings up insights tools in Azure to help monitor health checks and implement alert texts or emails when things go bad. A third group talks about how with App Insights they've heard about governance rules to auto recover. Finally, while your changing the template another group is asking for a way to easily document their endpoints to show them to internal and external users.
+
+So to summarize all of the acceptance criteria they are
+
+1. Better utilize compute costs (Don't pay for more than use)
+1. Using newer technologies to help attract talent and grow expertise without over committing
+1. Implement a monitoring solution to know when the app does crash
+1. Implement a solution for displaying endpoint documentation
