@@ -116,4 +116,9 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
 }
 ```
 
-Site config is setting our connection string dynamically so we don't have to worry about it being compromised or changing it per env. The next section is the app insights resource itself it is the normal name, kind is webinsights since our API is a webapp, location is going to be our normal location var, and we have properties of Web and ingestion will be from app insights.
+Site config is setting our connection string dynamically so we don't have to worry about it being compromised or changing it per env. The next section is the app insights resource itself it is the normal name, kind is webinsights since our API is a webapp, location is going to be our normal location var, and we have properties of Web and ingestion will be from app insights. Now we just need to redeploy our Bicep template and api and we should see changes.
+If everything worked as expected you should see a new resource like this
+![Solution1RG](media/Solution1RG.png "Solution1RG")
+you can also go to you app service to confirm the connection string is correct.
+![ConfigAI](media/ConfigAI.png "ConfigAI").
+Now we can go to our app insights and we should see both success and errors if we go to our swagger page and hit things!
