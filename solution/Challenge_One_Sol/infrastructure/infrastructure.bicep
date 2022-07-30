@@ -21,6 +21,10 @@ resource appService 'Microsoft.Web/sites@2021-03-01' = {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: insights.properties.InstrumentationKey
         }
+        {
+          name: 'ApplicationInsights.ConnectionString'
+          value: insights.properties.ConnectionString
+        }
       ]
     }
   }
