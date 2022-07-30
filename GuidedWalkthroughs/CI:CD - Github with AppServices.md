@@ -402,4 +402,4 @@ With that you are now able to have full CI/CD to a dev environment!
 
 ## Task 10 Delete All Of Your Resource Groups
 
-## Task 11 ⭐⭐You have now completed the first start and are officially no longer a novice and now can be considered dangerous in DevOps!⭐⭐
+## Task 11 ⭐⭐You have now completed the first part and are officially no longer a novice! Lets keep working on challenges to become dangerous!⭐⭐

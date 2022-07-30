@@ -21,32 +21,32 @@ jobs:
 
       - name: Install dependencies
         run: dotnet restore
-        working-directory: solution
+        working-directory: solution/Challenge_One_Sol
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
-        working-directory: solution
+        working-directory: solution/Challenge_One_Sol
 
       - name: Test
         run: dotnet test --no-restore --verbosity normal
-        working-directory: solution
+        working-directory: solution/Challenge_One_Sol
 
       - name: Publish
         run: dotnet publish -c Release -o website
-        working-directory: solution
+        working-directory: solution/Challenge_One_Sol
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.2
         with:
           name: website
-          path: solution/website/**
+          path: solution/Challenge_One_Sol/website/**
           if-no-files-found: error
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.2
         with:
           name: iac
-          path: solution/infrastructure/infrastructure.bicep
+          path: solution/Challenge_One_Sol/infrastructure/infrastructure.bicep
           if-no-files-found: error
 
   merge_job_pre_prod:
