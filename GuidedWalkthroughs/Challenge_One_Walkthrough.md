@@ -7,7 +7,7 @@ This challenge had a few separate use cases I have heard in the real world some 
 1. Implement a monitoring solution to know when the app does crash
 1. Implement a solution for displaying endpoint documentation
 
-There are a few different paths for this like right sizing app services, spinning them down outside of peak hours, external monitoring tools like datadog, and having a wiki. However, the solution I picked for sake of this argument is using Swagger code gen for documentation (I picked this because in the future an end user can consume your swagger docs to create middleware services, test your api with in browser UI, and a few other things that we'll talk about in later challenges), for newer technologies we are going to dockerize our API using Docker Desktop deployed to an Azure container app, and we will use app insights to setup email alerts whenever our API is having issues. Here's a picture of the overall infra we are talking about.
+There are a few different paths for this like right sizing app services, spinning them down outside of peak hours, external monitoring tools like datadog, and having a wiki. However, the solution I picked for sake of this argument is using Swagger code gen for documentation (I picked this because in the future an end user can consume your swagger docs to create middleware services, test your api with in browser UI, and a few other things that we'll talk about in later challenges), for newer technologies we are going to containerize our API using Rancher deployed to an Azure container app, and we will use app insights to setup email alerts whenever our API is having issues. Here's a picture of the overall infra we are talking about.
 
 ![Solution](media/Solution1.png "Solution")
 
@@ -121,4 +121,14 @@ If everything worked as expected you should see a new resource like this
 ![Solution1RG](media/Solution1RG.png "Solution1RG")
 you can also go to you app service to confirm the connection string is correct.
 ![ConfigAI](media/ConfigAI.png "ConfigAI").
-Now we can go to our app insights and we should see both success and errors if we go to our swagger page and hit things!
+Now we can go to our app insights and we should see both success and errors if we go to our swagger page and hit things! We can see our swagger urls here. ![DeployedSwagger](media/DeployedSwagger.png "DeployedSwagger")
+![FailedRequests](media/FailedRequests.png "FailedRequests")
+now app insights should be setup and going! Now we need to setup alerts!
+
+##### Alerts
+
+While you can do this via a Bicep file. I typically like to make these groups via the UI. They are usually small tweaks and can change regularly. A lot of times the people who manage alerts can also be off the dev team so this allows them to also change the groups as needed without the dev teams direct help. You can create an action group by clicking on Alerts. You want to click on that go to Alerts and then Create Alert Rule.
+![ActionGroup](media/ActionGroup.png "Action Group")
+Here we can select Exceptions and be alerted any time the aggregate exception count is greater than a set limit say 5 over a 5 minute period
+![Alert](media/Alert.png "Alert")
+This alert will cost roughly 10 cents per month and will let us know when exceptions are above 5 over a five minute average. You can tweak those numbers but for our demo that should be good. Actions we can set who and how we are alerted for example email or text. You can also alert Teams channels if you'd like. Then you are asked for details. Once that is done you are ready to be alerted on exceptions! Now we are ready to dockerize our app and use Rancher!
